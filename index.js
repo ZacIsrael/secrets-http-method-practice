@@ -39,7 +39,7 @@ app.post("/get-secret", async (req, res) => {
 });
 
 app.post("/post-secret", async (req, res) => {
-  // Throw error if the secret and score are both empty; these are MANDATORY fields to create a secret
+  // Throw error if the secret or score values are empty; these are MANDATORY fields to create a secret
   if (
     req.body.secret.trim().length === 0 ||
     req.body.score.trim().length === 0
@@ -81,7 +81,7 @@ app.post("/post-secret", async (req, res) => {
 
 app.post("/put-secret", async (req, res) => {
   const searchId = req.body.id;
-  // Throw error if the secret and score are both empty; should not be able to replace an existing secret with empty values
+  // Throw error if the secret or score values are empty; should not be able to replace an existing secret with empty values
   if (
     req.body.secret.trim().length === 0 ||
     req.body.score.trim().length === 0
@@ -103,10 +103,10 @@ app.post("/put-secret", async (req, res) => {
         config
       );
 
-      const updatedSecret = result.data;
-      console.log("updatedSecret = ", updatedSecret);
+      const replacedSecret = result.data;
+      console.log("replacedSecret = ", replacedSecret);
       // Use JSON.stringify to turn the JS object from axios into a string.
-      let resString = JSON.stringify(updatedSecret);
+      let resString = JSON.stringify(replacedSecret);
 
       // send the string of the updated secret to the EJS file
       res.render("index", {
@@ -127,7 +127,53 @@ app.post("/put-secret", async (req, res) => {
 
 app.post("/patch-secret", async (req, res) => {
   const searchId = req.body.id;
-  // TODO 4: Use axios to PATCH the data from req.body to the secrets api servers.
+
+  // Throw error if the secret AND score values are both empty; No point in
+  // calling the patch method if you have nothing to update
+  if (
+    req.body.secret.trim().length === 0 &&
+    req.body.score.trim().length === 0
+  ) {
+    res.render("index", {
+      content: `Please add a secret OR a score so the secret with id = ${searchId} can be updated.`,
+    });
+  } else {
+    // TODO 4: Use axios to PATCH the data from req.body to the secrets api servers.
+    
+    let body = {};
+    // only include secret in the body of the request if it is not empty
+    if(req.body.secret.trim().length > 0){ body.secret = req.body.secret}
+    // only include score in the body of the request if it is not empty
+    if(req.body.score.trim().length > 0){ body.score = req.body.score}
+    
+    console.log('body = ', body);
+    try {
+      const result = await axios.patch(API_URL + "/secrets/" + searchId, 
+        // update its contents with the following
+        body
+        , config);
+
+      const updatedSecret = result.data;
+
+      console.log('updatedSecret = ' , updatedSecret)
+      // Use JSON.stringify to turn the JS object from axios into a string.
+      let resString = JSON.stringify(updatedSecret);
+
+      // send the string of the updated secret to the EJS file
+      res.render("index", {
+        content: resString,
+      });
+    } catch (error) {
+      console.log("Error: ", error.response.data);
+
+      // Use JSON.stringify to turn the JS object from axios into a string.
+      let errString = JSON.stringify(error.response.data);
+
+      res.render("index", {
+        content: errString,
+      });
+    }
+  }
 });
 
 app.post("/delete-secret", async (req, res) => {
