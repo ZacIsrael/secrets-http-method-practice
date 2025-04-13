@@ -6,13 +6,16 @@ const app = express();
 const port = 3000;
 const API_URL = "https://secrets-api.appbrewery.com";
 
+// Set EJS as the templating engine
+app.set("view engine", "ejs");
+
 // HINTs: Use the axios documentation as well as the video lesson to help you.
 // https://axios-http.com/docs/post_example
 // Use the Secrets API documentation to figure out what each route expects and how to work with it.
 // https://secrets-api.appbrewery.com/
 
 //TODO 1: Add your own bearer token from the previous lesson.
-const yourBearerToken = "";
+const yourBearerToken = "ce7ef750-bda7-43e6-971c-90cef4696865";
 const config = {
   headers: { Authorization: `Bearer ${yourBearerToken}` },
 };
@@ -25,8 +28,10 @@ app.get("/", (req, res) => {
 
 app.post("/get-secret", async (req, res) => {
   const searchId = req.body.id;
+  console.log("searchId = ", searchId);
   try {
     const result = await axios.get(API_URL + "/secrets/" + searchId, config);
+    console.log("result = ", result);
     res.render("index.ejs", { content: JSON.stringify(result.data) });
   } catch (error) {
     res.render("index.ejs", { content: JSON.stringify(error.response.data) });
@@ -35,6 +40,33 @@ app.post("/get-secret", async (req, res) => {
 
 app.post("/post-secret", async (req, res) => {
   // TODO 2: Use axios to POST the data from req.body to the secrets api servers.
+  console.log("req.body = ", req.body);
+  try {
+    const createdSecret = await axios.post(
+      `${API_URL}/secrets`,
+      {
+        // create a new secret with the input from the request
+        secret: req.body.secret,
+        score: req.body.score,
+      },
+      // Must have a bearer token in the header of the request in 
+      // order to send a post request to create a secret with this API
+      config
+    );
+    const result = createdSecret.data;
+    console.log('createdSecret.data = ', result);
+    // Use JSON.stringify to turn the JS object from axios into a string.
+    let resString = JSON.stringify(result);
+    // send the string of the created secret to the EJS file
+    res.render('index', {
+      content: resString
+    });
+  } catch (error) {
+    console.log("Error: ", error);
+    res.render('index', {
+      content: error.message,
+    });
+  }
 });
 
 app.post("/put-secret", async (req, res) => {
