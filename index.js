@@ -139,23 +139,29 @@ app.post("/patch-secret", async (req, res) => {
     });
   } else {
     // TODO 4: Use axios to PATCH the data from req.body to the secrets api servers.
-    
+
     let body = {};
     // only include secret in the body of the request if it is not empty
-    if(req.body.secret.trim().length > 0){ body.secret = req.body.secret}
+    if (req.body.secret.trim().length > 0) {
+      body.secret = req.body.secret;
+    }
     // only include score in the body of the request if it is not empty
-    if(req.body.score.trim().length > 0){ body.score = req.body.score}
-    
-    console.log('body = ', body);
+    if (req.body.score.trim().length > 0) {
+      body.score = req.body.score;
+    }
+
+    console.log("body = ", body);
     try {
-      const result = await axios.patch(API_URL + "/secrets/" + searchId, 
+      const result = await axios.patch(
+        API_URL + "/secrets/" + searchId,
         // update its contents with the following
-        body
-        , config);
+        body,
+        config
+      );
 
       const updatedSecret = result.data;
 
-      console.log('updatedSecret = ' , updatedSecret)
+      console.log("updatedSecret = ", updatedSecret);
       // Use JSON.stringify to turn the JS object from axios into a string.
       let resString = JSON.stringify(updatedSecret);
 
@@ -179,6 +185,28 @@ app.post("/patch-secret", async (req, res) => {
 app.post("/delete-secret", async (req, res) => {
   const searchId = req.body.id;
   // TODO 5: Use axios to DELETE the item with searchId from the secrets api servers.
+  try {
+    let result = await axios.delete(API_URL + "/secrets/" + searchId, config);
+    let deletedSecret = result.data;
+
+    console.log("deletedSecret = ", deletedSecret);
+    // Use JSON.stringify to turn the JS object from axios into a string.
+    let resString = JSON.stringify(deletedSecret);
+
+    // send the string of the message about the deleted secret to the EJS file
+    res.render("index", {
+      content: resString,
+    });
+  } catch (error) {
+    console.log("Error: ", error.response.data);
+
+    // Use JSON.stringify to turn the JS object from axios into a string.
+    let errString = JSON.stringify(error.response.data);
+
+    res.render("index", {
+      content: errString,
+    });
+  }
 });
 
 app.listen(port, () => {
